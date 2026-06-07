@@ -258,13 +258,19 @@ export default function MindMapCanvas() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <rect
-          x="-50000" y="-50000" width="100000" height="100000"
-          fill="transparent"
+        <defs>
+          <pattern id="dot-grid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+            <circle cx="16" cy="16" r="1.2" fill="currentColor" opacity="0.18" />
+          </pattern>
+        </defs>
+
+        {/* Dot-grid background — outside the transform so it tiles in screen space */}
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#dot-grid)"
           onMouseDown={handleMouseDown}
           onClick={handleBackgroundClick}
           style={{ cursor: 'grab' }}
         />
+
         <g transform={`translate(${transform.x},${transform.y}) scale(${transform.scale})`}>
           {allEdges.map((e) => (
             <MindMapEdge key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} color={e.color} />

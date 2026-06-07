@@ -6,6 +6,7 @@
   background: var(--canvas-bg);
   display: flex;
   flex-direction: column;
+  color: var(--text-secondary); /* dot-grid uses currentColor */
 }
 
 .toolbar {

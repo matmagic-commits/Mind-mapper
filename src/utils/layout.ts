@@ -9,7 +9,7 @@ export interface NodePosition {
 
 export function computeRadialLayout(
   root: MindMapNode,
-  radiusStep: number = 180
+  radiusStep: number = 220
 ): Map<string, NodePosition> {
   const positions = new Map<string, NodePosition>();
 
@@ -20,7 +20,13 @@ export function computeRadialLayout(
   const maxDepth = hier.height || 1;
   const totalRadius = maxDepth * radiusStep;
 
-  const treeLayout = tree<MindMapNode>().size([2 * Math.PI, totalRadius]);
+  const treeLayout = tree<MindMapNode>()
+    .size([2 * Math.PI, totalRadius])
+    // Give more angular gap between branches from different parents,
+    // scaled by depth so inner arcs (shorter circumference) spread wider.
+    .separation((a, b) =>
+      (a.parent === b.parent ? 1.2 : 2.8) / Math.max(1, a.depth)
+    );
   const laid = treeLayout(hier);
 
   laid.each((node) => {
