@@ -64,6 +64,10 @@ export default function MindMapCanvas() {
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
+  // The single-click part of a double-click fires handleBackgroundClick first,
+  // clearing selectedNodeId before handleBackgroundDoubleClick reads it.
+  // This ref captures the selection at click time so the double-click can use it.
+  const selectedAtClick = useRef<string | null>(null);
 
   // Edit state — owned here so we can position the input correctly
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
@@ -194,7 +198,9 @@ export default function MindMapCanvas() {
   }
 
   function handleBackgroundDoubleClick(e: React.MouseEvent<SVGRectElement>) {
-    const targetId = state.selectedNodeId ?? currentMap?.root.id;
+    // Use the node that was selected at the time of the preceding single click
+    const targetId = selectedAtClick.current ?? currentMap?.root.id;
+    selectedAtClick.current = null;
     if (!targetId) return;
     e.stopPropagation();
     dispatch({ type: 'ADD_NODE', parentId: targetId });
@@ -203,6 +209,7 @@ export default function MindMapCanvas() {
   function handleBackgroundClick(e: React.MouseEvent<SVGRectElement>) {
     e.stopPropagation();
     if (editingNodeId) { commitEdit(); return; }
+    selectedAtClick.current = state.selectedNodeId;
     dispatch({ type: 'SET_SELECTED_NODE', nodeId: null });
   }
 
