@@ -57,29 +57,99 @@ function collectAllEdges(
 }
 
 export default function MindMapCanvas() {
-  const { state, dispatch, currentMap, searchMatches, lastAddedNodeId } =
-    useMindMap();
+  const { state, dispatch, currentMap, searchMatches, lastAddedNodeId } = useMindMap();
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
-  const [autoEditNodeId, setAutoEditNodeId] = useState<string | null>(null);
 
-  // Centre the map on first load
+  // Edit state — owned here so we can position the input correctly
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [editInputStyle, setEditInputStyle] = useState<React.CSSProperties>({ display: 'none' });
+
+  // Centre map on load
   useEffect(() => {
     if (!containerRef.current) return;
     const { width, height } = containerRef.current.getBoundingClientRect();
     setTransform({ x: width / 2, y: height / 2, scale: 1 });
   }, [currentMap?.id]);
 
-  // When a new node is added, trigger auto-edit
+  // Auto-edit newly added nodes
   useEffect(() => {
     if (lastAddedNodeId.current) {
-      setAutoEditNodeId(lastAddedNodeId.current);
+      const id = lastAddedNodeId.current;
       lastAddedNodeId.current = null;
+      // Defer so the layout has been computed with the new node
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        startEdit(id);
+      }));
     }
   });
+
+  // Reposition the input whenever transform or editingNodeId changes
+  useEffect(() => {
+    if (!editingNodeId || !svgRef.current || !containerRef.current) {
+      setEditInputStyle({ display: 'none' });
+      return;
+    }
+    const pos = computeRadialLayout(currentMap!.root).get(editingNodeId);
+    if (!pos) { setEditInputStyle({ display: 'none' }); return; }
+
+    const svgRect = svgRef.current.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    // Convert node SVG coords → absolute position within the container
+    const left = (svgRect.left - containerRect.left) + pos.x * transform.scale + transform.x;
+    const top  = (svgRect.top  - containerRect.top)  + pos.y * transform.scale + transform.y;
+
+    setEditInputStyle({
+      position: 'absolute',
+      left: left - 72,
+      top:  top  - 16,
+      display: 'block',
+      width: 144,
+      zIndex: 1000,
+    });
+  }, [editingNodeId, transform, currentMap]);
+
+  // Focus input after it becomes visible
+  useEffect(() => {
+    if (editingNodeId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingNodeId, editInputStyle]);
+
+  function startEdit(nodeId: string) {
+    if (!currentMap) return;
+    // Find the label for this node
+    function findLabel(node: MindMapNode): string | null {
+      if (node.id === nodeId) return node.label;
+      for (const c of node.children) {
+        const l = findLabel(c);
+        if (l !== null) return l;
+      }
+      return null;
+    }
+    const label = findLabel(currentMap.root) ?? '';
+    setEditingValue(label);
+    setEditingNodeId(nodeId);
+  }
+
+  function commitEdit() {
+    if (editingNodeId) {
+      const val = editingValue.trim();
+      if (val) dispatch({ type: 'UPDATE_NODE_LABEL', nodeId: editingNodeId, label: val });
+    }
+    setEditingNodeId(null);
+  }
+
+  function cancelEdit() {
+    setEditingNodeId(null);
+  }
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -107,12 +177,7 @@ export default function MindMapCanvas() {
   function handleMouseDown(e: React.MouseEvent<SVGRectElement>) {
     if (e.button !== 0) return;
     isPanning.current = true;
-    panStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      tx: transform.x,
-      ty: transform.y,
-    };
+    panStart.current = { x: e.clientX, y: e.clientY, tx: transform.x, ty: transform.y };
   }
 
   function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
@@ -137,21 +202,8 @@ export default function MindMapCanvas() {
 
   function handleBackgroundClick(e: React.MouseEvent<SVGRectElement>) {
     e.stopPropagation();
+    if (editingNodeId) { commitEdit(); return; }
     dispatch({ type: 'SET_SELECTED_NODE', nodeId: null });
-  }
-
-  function handleZoomIn() {
-    setTransform((prev) => ({ ...prev, scale: Math.min(4, prev.scale * 1.25) }));
-  }
-
-  function handleZoomOut() {
-    setTransform((prev) => ({ ...prev, scale: Math.max(0.2, prev.scale * 0.8) }));
-  }
-
-  function handleResetView() {
-    if (!containerRef.current) return;
-    const { width, height } = containerRef.current.getBoundingClientRect();
-    setTransform({ x: width / 2, y: height / 2, scale: 1 });
   }
 
   if (!currentMap) return null;
@@ -164,42 +216,45 @@ export default function MindMapCanvas() {
   const allEdges: Array<{ id: string; x1: number; y1: number; x2: number; y2: number; color: string }> = [];
   collectAllEdges(currentMap.root, positions, 0, allEdges);
 
+  // Find colour of the node being edited for the input border
+  const editingNode = editingNodeId
+    ? allNodes.find((n) => n.node.id === editingNodeId)
+    : null;
+  const editBorderColor = editingNode
+    ? resolveNodeColor(editingNode.node, editingNode.depth)
+    : '#6366f1';
+
   return (
     <div ref={containerRef} className={styles.container}>
       {/* Toolbar */}
       <div className={styles.toolbar}>
-        <button
-          className={styles.toolbarBtn}
-          onClick={() => dispatch({ type: 'CLOSE_MAP' })}
-          title="Back to home"
-        >
+        <button className={styles.toolbarBtn} onClick={() => dispatch({ type: 'CLOSE_MAP' })} title="Back to home">
           <ArrowLeft size={16} />
           <span>Home</span>
         </button>
         <span className={styles.mapTitle}>{currentMap.name}</span>
         <div className={styles.toolbarRight}>
-          <button className={styles.toolbarBtn} onClick={handleZoomOut} title="Zoom out">
+          <button className={styles.toolbarBtn} onClick={() => setTransform((p) => ({ ...p, scale: Math.max(0.2, p.scale * 0.8) }))} title="Zoom out">
             <ZoomOut size={16} />
           </button>
-          <button className={styles.toolbarBtn} onClick={handleZoomIn} title="Zoom in">
+          <button className={styles.toolbarBtn} onClick={() => setTransform((p) => ({ ...p, scale: Math.min(4, p.scale * 1.25) }))} title="Zoom in">
             <ZoomIn size={16} />
           </button>
-          <button className={styles.toolbarBtn} onClick={handleResetView} title="Reset view">
+          <button className={styles.toolbarBtn} onClick={() => {
+            if (!containerRef.current) return;
+            const { width, height } = containerRef.current.getBoundingClientRect();
+            setTransform({ x: width / 2, y: height / 2, scale: 1 });
+          }} title="Reset view">
             <Maximize2 size={16} />
           </button>
-          <button
-            className={styles.toolbarBtn}
-            onClick={() => exportMapAsJSON(currentMap)}
-            title="Export JSON"
-          >
+          <button className={styles.toolbarBtn} onClick={() => exportMapAsJSON(currentMap)} title="Export JSON">
             <Download size={16} />
           </button>
         </div>
       </div>
 
-      {/* Hint bar */}
       <div className={styles.hint}>
-        Double-click canvas to add a node · Click node to select · Click again to edit · Right-click for options
+        Double-click canvas to add a node · Tap to select · Tap again to edit · Long-press / right-click for options
       </div>
 
       {/* SVG Canvas */}
@@ -210,33 +265,18 @@ export default function MindMapCanvas() {
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {/* Background rect — captures pan and click-to-deselect */}
         <rect
-          x="-50000"
-          y="-50000"
-          width="100000"
-          height="100000"
+          x="-50000" y="-50000" width="100000" height="100000"
           fill="transparent"
           onMouseDown={handleMouseDown}
           onDoubleClick={handleBackgroundDoubleClick}
           onClick={handleBackgroundClick}
           style={{ cursor: 'grab' }}
         />
-
         <g transform={`translate(${transform.x},${transform.y}) scale(${transform.scale})`}>
-          {/* Edges behind nodes */}
           {allEdges.map((e) => (
-            <MindMapEdge
-              key={e.id}
-              x1={e.x1}
-              y1={e.y1}
-              x2={e.x2}
-              y2={e.y2}
-              color={e.color}
-            />
+            <MindMapEdge key={e.id} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2} color={e.color} />
           ))}
-
-          {/* Nodes */}
           {allNodes.map(({ node, x, y, depth }) => (
             <MindMapNodeComponent
               key={node.id}
@@ -246,13 +286,36 @@ export default function MindMapCanvas() {
               depth={depth}
               isSelected={state.selectedNodeId === node.id}
               isSearchMatch={searchMatches.has(node.id)}
-              svgRef={svgRef}
-              autoEdit={autoEditNodeId === node.id}
-              onAutoEditDone={() => setAutoEditNodeId(null)}
+              onRequestEdit={() => startEdit(node.id)}
             />
           ))}
         </g>
       </svg>
+
+      {/* Edit input — plain HTML, positioned via transform math, no SVG coordinate tricks */}
+      <input
+        ref={editInputRef}
+        style={{
+          ...editInputStyle,
+          padding: '5px 10px',
+          border: `2px solid ${editBorderColor}`,
+          borderRadius: 8,
+          fontSize: 14,
+          fontFamily: 'inherit',
+          textAlign: 'center',
+          outline: 'none',
+          boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
+          background: 'white',
+          color: '#1a1a1a',
+        }}
+        value={editingValue}
+        onChange={(e) => setEditingValue(e.target.value)}
+        onBlur={commitEdit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commitEdit();
+          if (e.key === 'Escape') cancelEdit();
+        }}
+      />
 
       {/* HTML overlays */}
       <SearchBar />

@@ -16,9 +16,7 @@ interface Props {
   depth: number;
   isSelected: boolean;
   isSearchMatch: boolean;
-  svgRef: React.RefObject<SVGSVGElement | null>;
-  autoEdit: boolean;
-  onAutoEditDone: () => void;
+  onRequestEdit: () => void;
 }
 
 const NODE_RADIUS = 32;
@@ -31,14 +29,10 @@ export default function MindMapNode({
   depth,
   isSelected,
   isSearchMatch,
-  svgRef,
-  autoEdit,
-  onAutoEditDone,
+  onRequestEdit,
 }: Props) {
   const { dispatch } = useMindMap();
-  const [editing, setEditing] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const colorPickerRef = useRef<HTMLInputElement>(null);
 
   const isRoot = node.parentId === null;
@@ -49,21 +43,6 @@ export default function MindMapNode({
   const displayLabel =
     node.label.length > 18 ? node.label.slice(0, 16) + '…' : node.label;
 
-  // When a new node is created, auto-enter edit mode
-  useEffect(() => {
-    if (autoEdit) {
-      setEditing(true);
-      onAutoEditDone();
-    }
-  }, [autoEdit, onAutoEditDone]);
-
-  useEffect(() => {
-    if (editing) {
-      positionAndFocusInput();
-    }
-  }, [editing]);
-
-  // Close context menu on outside click
   useEffect(() => {
     if (!contextMenu) return;
     const handler = () => setContextMenu(null);
@@ -71,27 +50,10 @@ export default function MindMapNode({
     return () => window.removeEventListener('click', handler);
   }, [contextMenu]);
 
-  function positionAndFocusInput() {
-    if (!svgRef.current || !inputRef.current) return;
-    const ctm = svgRef.current.getScreenCTM();
-    if (!ctm) return;
-    const pt = svgRef.current.createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    const screen = pt.matrixTransform(ctm);
-    const el = inputRef.current;
-    el.style.left = `${screen.x - 60}px`;
-    el.style.top = `${screen.y - 14}px`;
-    el.style.display = 'block';
-    el.value = node.label;
-    el.focus();
-    el.select();
-  }
-
   function handleClick(e: React.MouseEvent) {
     e.stopPropagation();
     if (isSelected) {
-      setEditing(true);
+      onRequestEdit();
     } else {
       dispatch({ type: 'SET_SELECTED_NODE', nodeId: node.id });
     }
@@ -102,23 +64,6 @@ export default function MindMapNode({
     e.stopPropagation();
     dispatch({ type: 'SET_SELECTED_NODE', nodeId: node.id });
     setContextMenu({ x: e.clientX, y: e.clientY });
-  }
-
-  function commitEdit() {
-    const val = inputRef.current?.value.trim() ?? '';
-    if (val) {
-      dispatch({ type: 'UPDATE_NODE_LABEL', nodeId: node.id, label: val });
-    }
-    setEditing(false);
-    if (inputRef.current) inputRef.current.style.display = 'none';
-  }
-
-  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') commitEdit();
-    if (e.key === 'Escape') {
-      setEditing(false);
-      if (inputRef.current) inputRef.current.style.display = 'none';
-    }
   }
 
   function handleToggleCollapse(e: React.MouseEvent) {
@@ -144,42 +89,12 @@ export default function MindMapNode({
   }
 
   const hasChildren = node.children.length > 0;
-  const toggleX = radius + 8;
-  const toggleY = 0;
 
   return (
     <>
-      {/* Floating input rendered into document body via portal-like positioning */}
-      <foreignObject x={0} y={0} width={0} height={0} overflow="visible">
-        <input
-          ref={inputRef}
-          style={{
-            position: 'fixed',
-            display: 'none',
-            width: 120,
-            padding: '4px 8px',
-            border: `2px solid ${fill}`,
-            borderRadius: 8,
-            fontSize: 13,
-            fontFamily: 'inherit',
-            textAlign: 'center',
-            outline: 'none',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
-            zIndex: 1000,
-            background: 'white',
-            color: '#1a1a1a',
-          }}
-          onBlur={commitEdit}
-          onKeyDown={handleInputKeyDown}
-        />
-      </foreignObject>
-
-      {/* Context menu */}
+      {/* Context menu — uses clientX/Y from the event so position is always correct */}
       {contextMenu && (
-        <foreignObject
-          x={0} y={0} width={0} height={0} overflow="visible"
-          style={{ zIndex: 2000 }}
-        >
+        <foreignObject x={0} y={0} width={0} height={0} overflow="visible">
           <div
             style={{
               position: 'fixed',
@@ -190,7 +105,7 @@ export default function MindMapNode({
               borderRadius: 10,
               boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
               padding: '6px 0',
-              minWidth: 160,
+              minWidth: 170,
               zIndex: 2000,
             }}
             onClick={(e) => e.stopPropagation()}
@@ -204,6 +119,16 @@ export default function MindMapNode({
               }}
             >
               ➕ Add child node
+            </button>
+            <button
+              style={menuItemStyle}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRequestEdit();
+                setContextMenu(null);
+              }}
+            >
+              ✏️ Edit label
             </button>
             <button
               style={menuItemStyle}
@@ -244,41 +169,14 @@ export default function MindMapNode({
         onContextMenu={handleContextMenu}
         style={{ cursor: 'pointer' }}
       >
-        {/* Search highlight ring */}
         {isSearchMatch && (
-          <circle
-            r={radius + 7}
-            fill="none"
-            stroke="#FFD600"
-            strokeWidth={3}
-            opacity={0.85}
-          />
+          <circle r={radius + 7} fill="none" stroke="#FFD600" strokeWidth={3} opacity={0.85} />
         )}
-
-        {/* Selection ring */}
         {isSelected && (
-          <circle
-            r={radius + 4}
-            fill="none"
-            stroke={fill}
-            strokeWidth={2.5}
-            strokeDasharray="6 3"
-            opacity={0.8}
-          />
+          <circle r={radius + 4} fill="none" stroke={fill} strokeWidth={2.5} strokeDasharray="6 3" opacity={0.8} />
         )}
-
-        {/* Main circle */}
-        <circle
-          r={radius}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={isSelected ? 2.5 : 1.5}
-        />
-
-        {/* Node title tooltip */}
+        <circle r={radius} fill={fill} stroke={stroke} strokeWidth={isSelected ? 2.5 : 1.5} />
         <title>{node.label}</title>
-
-        {/* Label text */}
         <text
           textAnchor="middle"
           dominantBaseline="central"
@@ -289,25 +187,15 @@ export default function MindMapNode({
         >
           {displayLabel}
         </text>
-
-        {/* Note indicator dot */}
         {node.note.trim() && (
-          <circle
-            cx={radius - 6}
-            cy={-(radius - 6)}
-            r={5}
-            fill="#FFD600"
-            stroke="white"
-            strokeWidth={1.5}
-          />
+          <circle cx={radius - 6} cy={-(radius - 6)} r={5} fill="#FFD600" stroke="white" strokeWidth={1.5} />
         )}
       </g>
 
-      {/* Collapse toggle — outside the main <g> to not inherit its transform for hit area */}
       {hasChildren && (
         <CollapseToggle
-          x={x + toggleX}
-          y={y + toggleY}
+          x={x + radius + 8}
+          y={y}
           collapsed={node.collapsed}
           onToggle={handleToggleCollapse}
         />
