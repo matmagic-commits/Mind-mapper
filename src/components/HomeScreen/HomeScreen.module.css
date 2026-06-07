@@ -1,3 +1,4 @@
+/* ── Container ────────────────────────────────────────────────────────── */
 .container {
   min-height: 100vh;
   background: var(--bg-primary);
@@ -5,37 +6,96 @@
   flex-direction: column;
 }
 
+/* ── Hero header ──────────────────────────────────────────────────────── */
 .header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  padding: 3rem 2rem 2.5rem;
+  position: relative;
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%);
+  padding: 3.5rem 2rem 3rem;
   color: white;
+  overflow: hidden;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@keyframes nodePulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 1;    transform: scale(1.6); }
+}
+
+.heroNode {
+  animation: nodePulse 3s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
 .headerInner {
+  position: relative;
   max-width: 680px;
   margin: 0 auto;
+  z-index: 1;
 }
 
-.title {
-  font-size: 2.4rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  margin: 0 0 0.4rem;
+/* ── Logo row ─────────────────────────────────────────────────────────── */
+.logoRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  margin-bottom: 1.75rem;
 }
 
-.titleIcon {
-  font-size: 2rem;
+.logoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(167, 139, 250, 0.18);
+  color: #a78bfa;
+  border: 1.5px solid rgba(167, 139, 250, 0.3);
 }
 
-.subtitle {
+.logoLabel {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+}
+
+/* ── Hero text ────────────────────────────────────────────────────────── */
+.heroTitle {
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.5px;
+  margin: 0 0 1rem;
+  color: #fff;
+}
+
+.heroTitleAccent {
+  display: block;
+  background: linear-gradient(90deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroSubtitle {
   margin: 0;
-  opacity: 0.7;
   font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 460px;
 }
 
+/* ── Main content ─────────────────────────────────────────────────────── */
 .main {
   flex: 1;
   max-width: 680px;
@@ -44,6 +104,20 @@
   padding: 2rem;
 }
 
+.createSection {
+  margin-bottom: 2.5rem;
+}
+
+.sectionLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+/* ── Create form ──────────────────────────────────────────────────────── */
 .createForm {
   display: flex;
   gap: 0.75rem;
@@ -82,19 +156,14 @@
   transition: background 0.15s, transform 0.1s;
 }
 
-.createButton:hover {
-  background: var(--accent-dark);
-}
+.createButton:hover  { background: var(--accent-dark); }
+.createButton:active { transform: scale(0.97); }
 
-.createButton:active {
-  transform: scale(0.97);
-}
-
+/* ── Import row ───────────────────────────────────────────────────────── */
 .importRow {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 2rem;
 }
 
 .importButton {
@@ -121,16 +190,7 @@
   font-size: 0.85rem;
 }
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 4rem 2rem;
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
+/* ── Map list ─────────────────────────────────────────────────────────── */
 .mapList {
   list-style: none;
   margin: 0;
@@ -141,35 +201,54 @@
 }
 
 .mapCard {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.25rem;
   background: var(--bg-card);
   border: 1.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+  overflow: hidden;
 }
 
 .mapCard:hover {
-  border-color: var(--accent);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
-  transform: translateY(-1px);
+  border-color: var(--card-accent, var(--accent));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--card-accent, var(--accent)) 20%, transparent);
+  transform: translateY(-2px);
 }
 
-.mapIcon {
-  color: var(--accent);
+/* Coloured left accent bar */
+.cardAccentBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 14px 0 0 14px;
+  background: var(--card-accent, var(--accent));
+}
+
+/* Coloured icon container */
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   flex-shrink: 0;
-  opacity: 0.8;
 }
 
+/* ── Map card content ─────────────────────────────────────────────────── */
 .mapInfo {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .mapName {
@@ -181,11 +260,12 @@
   text-overflow: ellipsis;
 }
 
-.mapDate {
+.mapMeta {
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
 
+/* ── Rename inline ────────────────────────────────────────────────────── */
 .renameRow {
   display: flex;
   align-items: center;
@@ -203,6 +283,7 @@
   outline: none;
 }
 
+/* ── Card action buttons ──────────────────────────────────────────────── */
 .mapActions {
   display: flex;
   align-items: center;
@@ -232,4 +313,34 @@
 .deleteBtn:hover {
   background: #fee2e2;
   color: #e53935;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: var(--text-secondary);
+  opacity: 0.3;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.emptyHint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  max-width: 280px;
 }
