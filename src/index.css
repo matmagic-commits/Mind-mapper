@@ -1,0 +1,60 @@
+/* Design tokens */
+:root {
+  --bg-primary: #f8f9fb;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f6;
+  --canvas-bg: #f0f2f7;
+  --text-primary: #1a1a2e;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --accent: #6366f1;
+  --accent-dark: #4f46e5;
+
+  font-family: system-ui, 'Segoe UI', Roboto, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color-scheme: light dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-hover: #252836;
+    --canvas-bg: #13151f;
+    --text-primary: #e8eaf0;
+    --text-secondary: #9ca3af;
+    --border: #2d3044;
+    --accent: #818cf8;
+    --accent-dark: #6366f1;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+textarea {
+  font-family: inherit;
+}
