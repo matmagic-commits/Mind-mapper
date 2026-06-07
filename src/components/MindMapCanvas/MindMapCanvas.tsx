@@ -64,11 +64,6 @@ export default function MindMapCanvas() {
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
-  // Capture selected node at the FIRST mousedown of a potential double-click.
-  // mousedown fires before any click handler, so selectedNodeId is still intact.
-  // A 300ms guard stops the second mousedown of the double-click from overwriting it.
-  const dblClickTargetId = useRef<string | null>(null);
-  const lastBgMouseDownTime = useRef(0);
 
   // Edit state — owned here so we can position the input correctly
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
@@ -181,12 +176,6 @@ export default function MindMapCanvas() {
 
   function handleMouseDown(e: React.MouseEvent<SVGRectElement>) {
     if (e.button !== 0) return;
-    const now = Date.now();
-    // Only capture on the first mousedown; ignore the second (within 300ms) of a double-click
-    if (now - lastBgMouseDownTime.current > 300) {
-      dblClickTargetId.current = state.selectedNodeId;
-    }
-    lastBgMouseDownTime.current = now;
     isPanning.current = true;
     panStart.current = { x: e.clientX, y: e.clientY, tx: transform.x, ty: transform.y };
   }
@@ -202,14 +191,6 @@ export default function MindMapCanvas() {
 
   function handleMouseUp() {
     isPanning.current = false;
-  }
-
-  function handleBackgroundDoubleClick(e: React.MouseEvent<SVGRectElement>) {
-    const targetId = dblClickTargetId.current ?? currentMap?.root.id;
-    dblClickTargetId.current = null;
-    if (!targetId) return;
-    e.stopPropagation();
-    dispatch({ type: 'ADD_NODE', parentId: targetId });
   }
 
   function handleBackgroundClick(e: React.MouseEvent<SVGRectElement>) {
@@ -266,7 +247,7 @@ export default function MindMapCanvas() {
       </div>
 
       <div className={styles.hint}>
-        Double-click canvas to add a node · Tap to select · Tap again to edit · Long-press / right-click for options
+        Tap + to add a child node · Tap to select · Tap again to edit · Long-press / right-click for options
       </div>
 
       {/* SVG Canvas */}
@@ -281,7 +262,6 @@ export default function MindMapCanvas() {
           x="-50000" y="-50000" width="100000" height="100000"
           fill="transparent"
           onMouseDown={handleMouseDown}
-          onDoubleClick={handleBackgroundDoubleClick}
           onClick={handleBackgroundClick}
           style={{ cursor: 'grab' }}
         />

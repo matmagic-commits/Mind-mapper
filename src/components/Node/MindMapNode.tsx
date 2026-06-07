@@ -88,6 +88,11 @@ export default function MindMapNode({
     dispatch({ type: 'UPDATE_NODE_COLOR', nodeId: node.id, color: undefined });
   }
 
+  function handleAddChild(e: React.MouseEvent) {
+    e.stopPropagation();
+    dispatch({ type: 'ADD_NODE', parentId: node.id });
+  }
+
   const hasChildren = node.children.length > 0;
 
   return (
@@ -200,6 +205,25 @@ export default function MindMapNode({
           onToggle={handleToggleCollapse}
         />
       )}
+
+      {/* Green + button — always visible, positioned below the node */}
+      <g
+        transform={`translate(${x}, ${y + radius + 12})`}
+        onClick={handleAddChild}
+        style={{ cursor: 'pointer' }}
+      >
+        <circle r={10} fill="#22c55e" stroke="white" strokeWidth={1.5} />
+        <text
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={14}
+          fontWeight="bold"
+          fill="white"
+          style={{ userSelect: 'none', pointerEvents: 'none' }}
+        >
+          +
+        </text>
+      </g>
     </>
   );
 }
