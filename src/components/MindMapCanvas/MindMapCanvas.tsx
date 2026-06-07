@@ -64,10 +64,11 @@ export default function MindMapCanvas() {
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
-  // The single-click part of a double-click fires handleBackgroundClick first,
-  // clearing selectedNodeId before handleBackgroundDoubleClick reads it.
-  // This ref captures the selection at click time so the double-click can use it.
-  const selectedAtClick = useRef<string | null>(null);
+  // Capture selected node at the FIRST mousedown of a potential double-click.
+  // mousedown fires before any click handler, so selectedNodeId is still intact.
+  // A 300ms guard stops the second mousedown of the double-click from overwriting it.
+  const dblClickTargetId = useRef<string | null>(null);
+  const lastBgMouseDownTime = useRef(0);
 
   // Edit state — owned here so we can position the input correctly
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
@@ -180,6 +181,12 @@ export default function MindMapCanvas() {
 
   function handleMouseDown(e: React.MouseEvent<SVGRectElement>) {
     if (e.button !== 0) return;
+    const now = Date.now();
+    // Only capture on the first mousedown; ignore the second (within 300ms) of a double-click
+    if (now - lastBgMouseDownTime.current > 300) {
+      dblClickTargetId.current = state.selectedNodeId;
+    }
+    lastBgMouseDownTime.current = now;
     isPanning.current = true;
     panStart.current = { x: e.clientX, y: e.clientY, tx: transform.x, ty: transform.y };
   }
@@ -198,9 +205,8 @@ export default function MindMapCanvas() {
   }
 
   function handleBackgroundDoubleClick(e: React.MouseEvent<SVGRectElement>) {
-    // Use the node that was selected at the time of the preceding single click
-    const targetId = selectedAtClick.current ?? currentMap?.root.id;
-    selectedAtClick.current = null;
+    const targetId = dblClickTargetId.current ?? currentMap?.root.id;
+    dblClickTargetId.current = null;
     if (!targetId) return;
     e.stopPropagation();
     dispatch({ type: 'ADD_NODE', parentId: targetId });
@@ -209,7 +215,6 @@ export default function MindMapCanvas() {
   function handleBackgroundClick(e: React.MouseEvent<SVGRectElement>) {
     e.stopPropagation();
     if (editingNodeId) { commitEdit(); return; }
-    selectedAtClick.current = state.selectedNodeId;
     dispatch({ type: 'SET_SELECTED_NODE', nodeId: null });
   }
 
