@@ -74,4 +74,6 @@
   width: 100%;
   height: 100%;
   cursor: default;
+  touch-action: none; /* hand all touch gestures to our JS handlers */
+  user-select: none;
 }

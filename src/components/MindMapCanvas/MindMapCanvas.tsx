@@ -62,10 +62,14 @@ export default function MindMapCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
+  // Keep a ref in sync so touch handlers (registered once) always see fresh values
+  const transformRef = useRef(transform);
+  transformRef.current = transform;
+
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
+  const lastPinchDist = useRef<number | null>(null);
 
-  // Edit state — owned here so we can position the input correctly
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const [editInputStyle, setEditInputStyle] = useState<React.CSSProperties>({ display: 'none' });
@@ -82,14 +86,11 @@ export default function MindMapCanvas() {
     if (lastAddedNodeId.current) {
       const id = lastAddedNodeId.current;
       lastAddedNodeId.current = null;
-      // Defer so the layout has been computed with the new node
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        startEdit(id);
-      }));
+      requestAnimationFrame(() => requestAnimationFrame(() => startEdit(id)));
     }
   });
 
-  // Reposition the input whenever transform or editingNodeId changes
+  // Reposition the edit input whenever transform or editing node changes
   useEffect(() => {
     if (!editingNodeId || !svgRef.current || !containerRef.current) {
       setEditInputStyle({ display: 'none' });
@@ -100,22 +101,12 @@ export default function MindMapCanvas() {
 
     const svgRect = svgRef.current.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
-
-    // Convert node SVG coords → absolute position within the container
     const left = (svgRect.left - containerRect.left) + pos.x * transform.scale + transform.x;
     const top  = (svgRect.top  - containerRect.top)  + pos.y * transform.scale + transform.y;
 
-    setEditInputStyle({
-      position: 'absolute',
-      left: left - 72,
-      top:  top  - 16,
-      display: 'block',
-      width: 144,
-      zIndex: 1000,
-    });
+    setEditInputStyle({ position: 'absolute', left: left - 72, top: top - 16, display: 'block', width: 144, zIndex: 1000 });
   }, [editingNodeId, transform, currentMap]);
 
-  // Focus input after it becomes visible
   useEffect(() => {
     if (editingNodeId && editInputRef.current) {
       editInputRef.current.focus();
@@ -125,17 +116,12 @@ export default function MindMapCanvas() {
 
   function startEdit(nodeId: string) {
     if (!currentMap) return;
-    // Find the label for this node
     function findLabel(node: MindMapNode): string | null {
       if (node.id === nodeId) return node.label;
-      for (const c of node.children) {
-        const l = findLabel(c);
-        if (l !== null) return l;
-      }
+      for (const c of node.children) { const l = findLabel(c); if (l !== null) return l; }
       return null;
     }
-    const label = findLabel(currentMap.root) ?? '';
-    setEditingValue(label);
+    setEditingValue(findLabel(currentMap.root) ?? '');
     setEditingNodeId(nodeId);
   }
 
@@ -147,33 +133,94 @@ export default function MindMapCanvas() {
     setEditingNodeId(null);
   }
 
-  function cancelEdit() {
-    setEditingNodeId(null);
-  }
+  function cancelEdit() { setEditingNodeId(null); }
 
+  // ── Mouse wheel zoom ──────────────────────────────────────────────────────
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     setTransform((prev) => {
       const delta = e.deltaY < 0 ? 1.1 : 0.9;
       const newScale = Math.max(0.2, Math.min(4, prev.scale * delta));
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const cursorX = e.clientX - rect.left;
-      const cursorY = e.clientY - rect.top;
-      return {
-        scale: newScale,
-        x: cursorX - (cursorX - prev.x) * (newScale / prev.scale),
-        y: cursorY - (cursorY - prev.y) * (newScale / prev.scale),
-      };
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      return { scale: newScale, x: cx - (cx - prev.x) * (newScale / prev.scale), y: cy - (cy - prev.y) * (newScale / prev.scale) };
     });
   }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
 
+  // ── Touch pan & pinch-zoom ────────────────────────────────────────────────
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    function onTouchStart(e: TouchEvent) {
+      if (e.touches.length === 1) {
+        isPanning.current = true;
+        lastPinchDist.current = null;
+        const t = e.touches[0];
+        panStart.current = { x: t.clientX, y: t.clientY, tx: transformRef.current.x, ty: transformRef.current.y };
+      } else if (e.touches.length === 2) {
+        isPanning.current = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastPinchDist.current = Math.hypot(dx, dy);
+      }
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      e.preventDefault(); // stop browser scroll — requires passive:false
+      if (e.touches.length === 1 && isPanning.current) {
+        const t = e.touches[0];
+        setTransform((prev) => ({
+          ...prev,
+          x: panStart.current.tx + (t.clientX - panStart.current.x),
+          y: panStart.current.ty + (t.clientY - panStart.current.y),
+        }));
+      } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const factor = dist / lastPinchDist.current;
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const rect = svgRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const cx = midX - rect.left;
+        const cy = midY - rect.top;
+        setTransform((prev) => {
+          const newScale = Math.max(0.2, Math.min(4, prev.scale * factor));
+          return { scale: newScale, x: cx - (cx - prev.x) * (newScale / prev.scale), y: cy - (cy - prev.y) * (newScale / prev.scale) };
+        });
+        lastPinchDist.current = dist;
+      }
+    }
+
+    function onTouchEnd() {
+      isPanning.current = false;
+      lastPinchDist.current = null;
+    }
+
+    svg.addEventListener('touchstart', onTouchStart, { passive: true });
+    svg.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    svg.addEventListener('touchend',   onTouchEnd);
+    svg.addEventListener('touchcancel',onTouchEnd);
+
+    return () => {
+      svg.removeEventListener('touchstart', onTouchStart);
+      svg.removeEventListener('touchmove',  onTouchMove);
+      svg.removeEventListener('touchend',   onTouchEnd);
+      svg.removeEventListener('touchcancel',onTouchEnd);
+    };
+  }, []); // registered once; uses refs for fresh values
+
+  // ── Mouse pan ─────────────────────────────────────────────────────────────
   function handleMouseDown(e: React.MouseEvent<SVGRectElement>) {
     if (e.button !== 0) return;
     isPanning.current = true;
@@ -189,9 +236,7 @@ export default function MindMapCanvas() {
     }));
   }
 
-  function handleMouseUp() {
-    isPanning.current = false;
-  }
+  function handleMouseUp() { isPanning.current = false; }
 
   function handleBackgroundClick(e: React.MouseEvent<SVGRectElement>) {
     e.stopPropagation();
@@ -202,55 +247,37 @@ export default function MindMapCanvas() {
   if (!currentMap) return null;
 
   const positions = computeRadialLayout(currentMap.root);
-
   const allNodes: Array<{ node: MindMapNode; x: number; y: number; depth: number }> = [];
   collectAllNodes(currentMap.root, positions, 0, allNodes);
-
   const allEdges: Array<{ id: string; x1: number; y1: number; x2: number; y2: number; color: string }> = [];
   collectAllEdges(currentMap.root, positions, 0, allEdges);
 
-  // Find colour of the node being edited for the input border
-  const editingNode = editingNodeId
-    ? allNodes.find((n) => n.node.id === editingNodeId)
-    : null;
-  const editBorderColor = editingNode
-    ? resolveNodeColor(editingNode.node, editingNode.depth)
-    : '#6366f1';
+  const editingNode = editingNodeId ? allNodes.find((n) => n.node.id === editingNodeId) : null;
+  const editBorderColor = editingNode ? resolveNodeColor(editingNode.node, editingNode.depth) : '#6366f1';
 
   return (
     <div ref={containerRef} className={styles.container}>
-      {/* Toolbar */}
       <div className={styles.toolbar}>
         <button className={styles.toolbarBtn} onClick={() => dispatch({ type: 'CLOSE_MAP' })} title="Back to home">
-          <ArrowLeft size={16} />
-          <span>Home</span>
+          <ArrowLeft size={16} /><span>Home</span>
         </button>
         <span className={styles.mapTitle}>{currentMap.name}</span>
         <div className={styles.toolbarRight}>
-          <button className={styles.toolbarBtn} onClick={() => setTransform((p) => ({ ...p, scale: Math.max(0.2, p.scale * 0.8) }))} title="Zoom out">
-            <ZoomOut size={16} />
-          </button>
-          <button className={styles.toolbarBtn} onClick={() => setTransform((p) => ({ ...p, scale: Math.min(4, p.scale * 1.25) }))} title="Zoom in">
-            <ZoomIn size={16} />
-          </button>
+          <button className={styles.toolbarBtn} onClick={() => setTransform((p) => ({ ...p, scale: Math.max(0.2, p.scale * 0.8) }))} title="Zoom out"><ZoomOut size={16} /></button>
+          <button className={styles.toolbarBtn} onClick={() => setTransform((p) => ({ ...p, scale: Math.min(4, p.scale * 1.25) }))} title="Zoom in"><ZoomIn size={16} /></button>
           <button className={styles.toolbarBtn} onClick={() => {
             if (!containerRef.current) return;
             const { width, height } = containerRef.current.getBoundingClientRect();
             setTransform({ x: width / 2, y: height / 2, scale: 1 });
-          }} title="Reset view">
-            <Maximize2 size={16} />
-          </button>
-          <button className={styles.toolbarBtn} onClick={() => exportMapAsJSON(currentMap)} title="Export JSON">
-            <Download size={16} />
-          </button>
+          }} title="Reset view"><Maximize2 size={16} /></button>
+          <button className={styles.toolbarBtn} onClick={() => exportMapAsJSON(currentMap)} title="Export JSON"><Download size={16} /></button>
         </div>
       </div>
 
       <div className={styles.hint}>
-        Tap + to add a child node · Tap to select · Tap again to edit · Long-press / right-click for options
+        Tap + to add a child · Tap node to select · Tap again to edit · Long-press for options · Pinch to zoom
       </div>
 
-      {/* SVG Canvas */}
       <svg
         ref={svgRef}
         className={styles.svg}
@@ -264,7 +291,6 @@ export default function MindMapCanvas() {
           </pattern>
         </defs>
 
-        {/* Dot-grid background — outside the transform so it tiles in screen space */}
         <rect x="0" y="0" width="100%" height="100%" fill="url(#dot-grid)"
           onMouseDown={handleMouseDown}
           onClick={handleBackgroundClick}
@@ -290,7 +316,6 @@ export default function MindMapCanvas() {
         </g>
       </svg>
 
-      {/* Edit input — plain HTML, positioned via transform math, no SVG coordinate tricks */}
       <input
         ref={editInputRef}
         style={{
@@ -309,13 +334,9 @@ export default function MindMapCanvas() {
         value={editingValue}
         onChange={(e) => setEditingValue(e.target.value)}
         onBlur={commitEdit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commitEdit();
-          if (e.key === 'Escape') cancelEdit();
-        }}
+        onKeyDown={(e) => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') cancelEdit(); }}
       />
 
-      {/* HTML overlays */}
       <SearchBar />
       <NotePanel />
     </div>
