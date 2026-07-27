@@ -63,7 +63,7 @@ export function mount(container, params, ctx) {
       </div>
       <div class="card category-card">
         <h3>🎧 For Teens &amp; Adults</h3>
-        <p>Original moody piano pieces inspired by 2000s rock and emo ballads, plus a blues groove — built for older beginners.</p>
+        <p>Original moody piano pieces inspired by bands like Evanescence, Linkin Park and HIM, plus a blues groove — built for older beginners.</p>
         <button class="btn btn-secondary" data-go="songs">Explore Originals</button>
       </div>
     </section>

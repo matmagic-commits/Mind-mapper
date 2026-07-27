@@ -3,7 +3,7 @@ import { getSongProgress, isSegmentPassed } from '../storage.js';
 
 const CATEGORY_LABELS = { kids: "Kids' Favorites", classics: 'Classics & Covers', originals: 'Originals for Teens & Adults' };
 const CATEGORY_NOTES = {
-  originals: 'These are original pieces written for this app, inspired by the mood and riff style of 2000s rock and emo piano ballads. They are not covers of, and are not affiliated with, any specific song or band.',
+  originals: 'These are original pieces written for this app, inspired by the mood and riff style of bands like Evanescence, Linkin Park, and HIM. They are not covers of, and are not affiliated with or endorsed by, any specific song, artist, or band — actual songs from that era are still under copyright, so this app writes its own music instead.',
 };
 
 function stars(n) {

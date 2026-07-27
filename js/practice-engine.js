@@ -3,6 +3,7 @@ import { PianoKeyboard } from './keyboard.js';
 import { InputManager } from './input.js';
 import { pianoAudio } from './audio.js';
 import { getSettings, updateSettings } from './storage.js';
+import { assignFingering, FINGER_NAMES } from './fingering.js';
 
 const LEAD_TIME_MS = 1650;
 const DEFAULT_HIT_WINDOW_MS = 220;
@@ -59,6 +60,7 @@ export class PracticeEngine {
     this.mode = this.forceMode || (settings.waitMode ? 'wait' : 'timed');
     this.tempoPct = settings.tempoPct || 100;
     this.showLabels = settings.showLabels !== false;
+    this.showFingers = settings.showFingers !== false;
     this.metronomeOn = !!settings.metronome;
 
     this.sliceEvents = this.allEvents.slice(this.range.start, this.range.end + 1);
@@ -102,6 +104,7 @@ export class PracticeEngine {
       <div class="control-group control-group-toggles">
         <label class="toggle"><input type="checkbox" class="metronome-toggle" ${this.metronomeOn ? 'checked' : ''}/> Metronome</label>
         <label class="toggle"><input type="checkbox" class="labels-toggle" ${this.showLabels ? 'checked' : ''}/> Key Names</label>
+        <label class="toggle"><input type="checkbox" class="fingers-toggle" ${this.showFingers ? 'checked' : ''}/> Finger Numbers</label>
       </div>
       <button class="btn btn-secondary practice-restart">↻ Restart</button>
     `;
@@ -140,6 +143,7 @@ export class PracticeEngine {
       tempoVal: controls.querySelector('.tempo-val'),
       metronomeToggle: controls.querySelector('.metronome-toggle'),
       labelsToggle: controls.querySelector('.labels-toggle'),
+      fingersToggle: controls.querySelector('.fingers-toggle'),
       restartBtn: controls.querySelector('.practice-restart'),
     };
 
@@ -170,6 +174,13 @@ export class PracticeEngine {
       this.keyboard.render();
       this._layoutFallingBars(true);
     });
+    this.el.fingersToggle.addEventListener('change', (e) => {
+      this.showFingers = e.target.checked;
+      updateSettings({ showFingers: this.showFingers });
+      if (!this.showFingers) this.keyboard.clearFingerBadges();
+      else if (this.mode === 'wait') this._advanceWaitTarget();
+      this._layoutFallingBars(true);
+    });
     this.el.restartBtn.addEventListener('click', () => this._setupSession());
   }
 
@@ -185,6 +196,7 @@ export class PracticeEngine {
 
     const bpm = this._effectiveBpm();
     this.timedEvents = computeAbsoluteTimes(this.sliceEvents, bpm);
+    this.fingerings = assignFingering(this.sliceEvents);
     const { min, max } = noteRange(this.sliceEvents);
     const { start, end } = paddedWhiteRange(min, max);
 
@@ -234,6 +246,7 @@ export class PracticeEngine {
 
   _advanceWaitTarget() {
     this.keyboard.clearHighlights('key-target');
+    this.keyboard.clearFingerBadges();
     if (this.currentIndex >= this.timedEvents.length) {
       this._finish(100, true);
       return;
@@ -250,18 +263,25 @@ export class PracticeEngine {
     }
     this.requiredRemaining = new Set(ev.notes.map((n) => nameToMidi(n)));
     for (const m of this.requiredRemaining) this.keyboard.setHighlight(m, 'key-target', true);
-    this.keyboard.ensureVisible(ev.notes.map((n) => nameToMidi(n))[0]);
+    const firstMidi = ev.notes.map((n) => nameToMidi(n))[0];
+    const finger = this.fingerings[this.currentIndex];
+    if (this.showFingers && finger) this.keyboard.setFingerBadge(firstMidi, finger.finger, finger.hand);
+    this.keyboard.ensureVisible(firstMidi);
     this._renderWaitPanel(ev, false);
   }
 
   _renderWaitPanel(currentEvent, isRest) {
     const upcoming = this.timedEvents.slice(this.currentIndex + 1, this.currentIndex + 6);
+    const upcomingFingers = this.fingerings.slice(this.currentIndex + 1, this.currentIndex + 6);
     const currentLabel = isRest ? 'Rest' : currentEvent.notes.map((n) => n.replace('#', '♯')).join(' + ');
+    const currentFinger = this.fingerings[this.currentIndex];
+    const fingerNote = !isRest && this.showFingers && currentFinger
+      ? ` <span class="finger-hint">· ${FINGER_NAMES[currentFinger.finger]} finger (${currentFinger.finger}), right hand</span>` : '';
     this.el.waitPanel.innerHTML = `
       <div class="wait-progress">Note ${Math.min(this.currentIndex + 1, this.timedEvents.length)} of ${this.timedEvents.length}</div>
-      <div class="wait-current ${isRest ? 'is-rest' : ''}">${isRest ? '𝘟 Rest — just wait a beat' : `Play: <strong>${currentLabel}</strong>`}</div>
+      <div class="wait-current ${isRest ? 'is-rest' : ''}">${isRest ? '𝘟 Rest — just wait a beat' : `Play: <strong>${currentLabel}</strong>${fingerNote}`}</div>
       <div class="wait-queue">
-        ${upcoming.map((e) => `<span class="queue-chip ${e.notes.length === 0 ? 'is-rest' : ''}">${e.notes.length ? e.notes.map((n) => n.replace('#', '♯')).join('+') : '—'}</span>`).join('')}
+        ${upcoming.map((e, i) => `<span class="queue-chip ${e.notes.length === 0 ? 'is-rest' : ''}">${e.notes.length ? e.notes.map((n) => n.replace('#', '♯')).join('+') : '—'}${this.showFingers && upcomingFingers[i] ? `<sup class="queue-finger">${upcomingFingers[i].finger}</sup>` : ''}</span>`).join('')}
       </div>
     `;
   }
@@ -358,6 +378,13 @@ export class PracticeEngine {
         if (ev.notes.length === 0) return null;
         const bar = document.createElement('div');
         bar.className = 'note-bar';
+        const finger = this.fingerings[i];
+        if (this.showFingers && finger) {
+          const badge = document.createElement('span');
+          badge.className = 'note-bar-finger';
+          badge.textContent = finger.finger;
+          bar.appendChild(badge);
+        }
         this.el.fallingArea.appendChild(bar);
         return bar;
       });

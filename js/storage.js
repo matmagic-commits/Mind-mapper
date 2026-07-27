@@ -15,7 +15,7 @@ function defaultState() {
   return {
     curriculum: {}, // stepId -> { completed: bool }
     songs: {}, // songId -> { segments: { idx: { passed: bool, best: number } }, fullSongBest: number, fullSongPassed: bool }
-    settings: { waitMode: true, showLabels: true, metronome: false, volume: 0.8, tempoPct: 100 },
+    settings: { waitMode: true, showLabels: true, showFingers: true, metronome: false, volume: 0.8, tempoPct: 100 },
     stats: { totalPasses: 0 },
   };
 }

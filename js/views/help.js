@@ -25,6 +25,19 @@ export function mount(container, params, ctx) {
     </section>
 
     <section class="card">
+      <h3>Which finger plays which key?</h3>
+      <p>Turn on the <strong>Finger Numbers</strong> toggle in any practice session to see a small numbered circle on the key you should press next (and on each falling note in Rhythm Mode). Standard piano fingering numbers each finger 1 through 5:</p>
+      <div class="finger-legend">
+        <span class="finger-legend-item"><span class="finger-badge-static">1</span> Thumb</span>
+        <span class="finger-legend-item"><span class="finger-badge-static">2</span> Index</span>
+        <span class="finger-legend-item"><span class="finger-badge-static">3</span> Middle</span>
+        <span class="finger-legend-item"><span class="finger-badge-static">4</span> Ring</span>
+        <span class="finger-legend-item"><span class="finger-badge-static">5</span> Pinky</span>
+      </div>
+      <p>This app currently teaches single-line melodies played with the <strong>right hand</strong>, so every finger number shown is for the right hand. Fingering is auto-generated using a simple five-finger-position rule — it's a helpful guide rather than an authoritative professional fingering, so feel free to adjust if a teacher suggests something different.</p>
+    </section>
+
+    <section class="card">
       <h3>Wait for Me vs. Rhythm Mode</h3>
       <p><strong>Wait for Me</strong> pauses and waits for you to play the correct key — perfect while you're still learning where notes are. <strong>Rhythm Mode</strong> plays notes falling toward the keyboard in real time, like a real piece of music — it scores your timing so you can build real playing skill.</p>
     </section>
@@ -32,7 +45,7 @@ export function mount(container, params, ctx) {
     <section class="card">
       <h3>About the songs</h3>
       <p>Kids' songs and folk pieces like Greensleeves or House of the Rising Sun are traditional, public-domain melodies. Classical pieces are labeled "simplified arrangement" because they're beginner-friendly excerpts, arranged specifically for this app rather than exact transcriptions of any copyrighted score.</p>
-      <p>The "Originals for Teens &amp; Adults" pieces (Fading Echoes, Shattered Glass, Neon Rain, Waking the Storm, 12-Bar Blues Groove) are original compositions written for this app. They're inspired by the mood and riff style of 2000s rock and emo piano ballads, but they are not covers of, and are not affiliated with or endorsed by, any specific song, artist, or band. That's a deliberate choice — actual song melodies from that era are still under copyright, so this app writes its own music instead of reproducing anyone else's.</p>
+      <p>The "Originals for Teens &amp; Adults" pieces are original compositions written for this app: Fading Echoes and Hollow Lullaby draw on the moody, minor-key piano-ballad mood of bands like Evanescence; Shattered Glass and Waking the Storm draw on the driving alt-rock/nu-metal piano riffs of bands like Linkin Park; Wounded Serenade and Static Valentine draw on the romantic gothic-rock ballad mood of bands like HIM. Neon Rain and the 12-Bar Blues Groove are general-purpose bonus pieces. None of these are covers of, or affiliated with or endorsed by, any specific song, artist, or band. That's a deliberate choice — actual song melodies from that era are still under copyright (transposing to a different key doesn't change that), so this app writes its own music instead of reproducing anyone else's.</p>
     </section>
   `;
 }

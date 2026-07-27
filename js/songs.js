@@ -136,15 +136,23 @@ export const SONGS = [
   ]),
 
   compile('fadingechoes', 'Fading Echoes', {
-    category: 'originals', source: 'Original piece, inspired by 2000s piano-rock ballads (not affiliated with any band)', bpm: 76, difficulty: 3,
+    category: 'originals', source: 'Original piece, inspired by the moody piano-ballad style of bands like Evanescence — not a cover, no affiliation', bpm: 76, difficulty: 3,
   }, [
     seg('Falling Motif', [n('A4', 0.5), n('C5', 0.5), n('E5', 0.5), n('D5', 0.5), n('C5', 0.5), n('B4', 0.5), n('A4', 1)]),
     seg('Rising Answer', [n('A4', 0.5), n('C5', 0.5), n('D5', 0.5), n('E5', 0.5), n('F5', 1), n('E5', 1)]),
     seg('Return', [n('A4', 0.5), n('C5', 0.5), n('E5', 0.5), n('D5', 0.5), n('C5', 0.5), n('B4', 0.5), n('A4', 2)]),
   ]),
 
+  compile('hollowlullaby', 'Hollow Lullaby', {
+    category: 'originals', source: 'Original piece, inspired by the moody piano-ballad style of bands like Evanescence — not a cover, no affiliation', bpm: 70, difficulty: 3,
+  }, [
+    seg('Lullaby Motif', [n('D4', 1), n('F4', 0.5), n('A4', 0.5), n('G4', 1), n('F4', 1)]),
+    seg('Drifting Higher', [n('D4', 0.5), n('F4', 0.5), n('A4', 0.5), n('D5', 1), n('C5', 1)]),
+    seg('Fading Close', [n('A4', 0.5), n('G4', 0.5), n('F4', 1), n('D4', 2)]),
+  ]),
+
   compile('shatteredglass', 'Shattered Glass', {
-    category: 'originals', source: 'Original piece, inspired by early-2000s alt-rock piano riffs (not affiliated with any band)', bpm: 92, difficulty: 3,
+    category: 'originals', source: 'Original piece, inspired by the driving alt-rock piano riffs of bands like Linkin Park — not a cover, no affiliation', bpm: 92, difficulty: 3,
   }, [
     seg('The Riff', [n('D4', 0.5), n('F4', 0.5), n('D4', 0.5), n('F4', 0.5), n('A4', 0.5), n('F4', 0.5), n('D4', 0.5), n('F4', 0.5)]),
     seg('The Riff (Variation)', [n('D4', 0.5), n('F4', 0.5), n('D4', 0.5), n('F4', 0.5), n('C5', 0.5), n('A4', 0.5), n('F4', 0.5), n('D4', 1)]),
@@ -159,11 +167,27 @@ export const SONGS = [
   ]),
 
   compile('wakingthestorm', 'Waking the Storm', {
-    category: 'originals', source: 'Original piece, inspired by dramatic 2000s nu-metal piano intros (not affiliated with any band)', bpm: 84, difficulty: 4,
+    category: 'originals', source: 'Original piece, inspired by the dramatic nu-metal piano intros of bands like Linkin Park — not a cover, no affiliation', bpm: 84, difficulty: 4,
   }, [
     seg('Ominous Opening', [n('E4', 1), n('E4', 0.5), n('G4', 0.5), n('E4', 1), n('D4', 1)]),
     seg('The Build', [n('E4', 0.5), n('F#4', 0.5), n('G4', 0.5), n('A4', 0.5), n('B4', 1), n('A4', 0.5), n('G4', 0.5)]),
     seg('The Drop', [n('E5', 0.5), n('B4', 0.5), n('G4', 0.5), n('E4', 1.5)]),
+  ]),
+
+  compile('woundedserenade', 'Wounded Serenade', {
+    category: 'originals', source: 'Original piece, inspired by the romantic gothic-rock ballad style of bands like HIM — not a cover, no affiliation', bpm: 72, difficulty: 3,
+  }, [
+    seg('Opening Ache', [n('E4', 1), n('G4', 0.5), n('B4', 0.5), n('A4', 1), n('G4', 1)]),
+    seg('The Vow', [n('E4', 0.5), n('F#4', 0.5), n('G4', 1), n('B4', 1), n('A4', 1)]),
+    seg('Resolve', [n('G4', 0.5), n('E4', 0.5), n('D4', 1), n('E4', 2)]),
+  ]),
+
+  compile('staticvalentine', 'Static Valentine', {
+    category: 'originals', source: 'Original piece, inspired by the romantic gothic-rock ballad style of bands like HIM — not a cover, no affiliation', bpm: 88, difficulty: 3,
+  }, [
+    seg('Static Pulse', [n('A4', 0.5), n('C5', 0.5), n('A4', 0.5), n('C5', 0.5), n('E5', 0.5), n('C5', 0.5), n('A4', 1)]),
+    seg('Valentine Turn', [n('B4', 0.5), n('C5', 0.5), n('D5', 0.5), n('E5', 1), n('C5', 1)]),
+    seg('Fade', [n('A4', 0.5), n('G4', 0.5), n('F4', 0.5), n('E4', 1.5)]),
   ]),
 
   compile('bluesgroove', '12-Bar Blues Groove', {

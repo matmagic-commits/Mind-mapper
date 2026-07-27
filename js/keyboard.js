@@ -138,6 +138,22 @@ export class PianoKeyboard {
     this.keyEls.forEach((el) => el.classList.remove(className));
   }
 
+  setFingerBadge(midi, finger, hand) {
+    const el = this.keyEls.get(midi);
+    if (!el) return;
+    this.clearFingerBadges();
+    const badge = document.createElement('span');
+    badge.className = `finger-badge finger-badge-${hand === 'L' ? 'left' : 'right'}`;
+    badge.textContent = String(finger);
+    el.appendChild(badge);
+  }
+
+  clearFingerBadges() {
+    this.keyEls.forEach((el) => {
+      el.querySelectorAll('.finger-badge').forEach((b) => b.remove());
+    });
+  }
+
   getKeyRect(midi) {
     const el = this.keyEls.get(midi);
     if (!el) return null;
