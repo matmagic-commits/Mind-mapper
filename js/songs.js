@@ -120,6 +120,58 @@ export const SONGS = [
     seg('Arpeggio, Part 3', [n('F4', 0.5), n('A4', 0.5), n('C5', 0.5), n('F5', 0.5), n('E5', 0.5), n('C5', 0.5), n('A4', 0.5), n('C5', 0.5)]),
     seg('Arpeggio, Part 4 (Resolve)', [n('G4', 0.5), n('B4', 0.5), n('D5', 0.5), n('G5', 0.5), n('F5', 0.5), n('D5', 0.5), n('B4', 0.5), n('G4', 2)]),
   ]),
+
+  compile('greensleeves', 'Greensleeves', {
+    category: 'classics', source: 'Traditional English (16th century) — simplified arrangement', bpm: 90, difficulty: 3,
+  }, [
+    seg('Alas, My Love', [n('A4', 1), n('C5', 0.5), n('D5', 0.5), n('E5', 1), n('F5', 0.5), n('E5', 0.5), n('D5', 1), n('B4', 0.5), n('C5', 0.5), n('A4', 2)]),
+    seg('Delighting in Your Company', [n('A4', 1), n('C5', 0.5), n('D5', 0.5), n('E5', 1), n('F5', 0.5), n('E5', 0.5), n('D5', 1), n('C5', 0.5), n('B4', 0.5), n('A4', 2)]),
+  ]),
+
+  compile('risingsun', 'House of the Rising Sun', {
+    category: 'classics', source: 'Traditional American folk — simplified arrangement', bpm: 76, difficulty: 3,
+  }, [
+    seg('There Is a House', [n('A4', 1), n('C5', 1), n('D5', 1), n('E5', 1), n('C5', 1), n('D5', 1), n('A4', 2)]),
+    seg('The Rising Sun', [n('A4', 1), n('C5', 1), n('D5', 1), n('C5', 1), n('A4', 1), n('G4', 1), n('A4', 2)]),
+  ]),
+
+  compile('fadingechoes', 'Fading Echoes', {
+    category: 'originals', source: 'Original piece, inspired by 2000s piano-rock ballads (not affiliated with any band)', bpm: 76, difficulty: 3,
+  }, [
+    seg('Falling Motif', [n('A4', 0.5), n('C5', 0.5), n('E5', 0.5), n('D5', 0.5), n('C5', 0.5), n('B4', 0.5), n('A4', 1)]),
+    seg('Rising Answer', [n('A4', 0.5), n('C5', 0.5), n('D5', 0.5), n('E5', 0.5), n('F5', 1), n('E5', 1)]),
+    seg('Return', [n('A4', 0.5), n('C5', 0.5), n('E5', 0.5), n('D5', 0.5), n('C5', 0.5), n('B4', 0.5), n('A4', 2)]),
+  ]),
+
+  compile('shatteredglass', 'Shattered Glass', {
+    category: 'originals', source: 'Original piece, inspired by early-2000s alt-rock piano riffs (not affiliated with any band)', bpm: 92, difficulty: 3,
+  }, [
+    seg('The Riff', [n('D4', 0.5), n('F4', 0.5), n('D4', 0.5), n('F4', 0.5), n('A4', 0.5), n('F4', 0.5), n('D4', 0.5), n('F4', 0.5)]),
+    seg('The Riff (Variation)', [n('D4', 0.5), n('F4', 0.5), n('D4', 0.5), n('F4', 0.5), n('C5', 0.5), n('A4', 0.5), n('F4', 0.5), n('D4', 1)]),
+    seg('The Lift', [n('F4', 0.5), n('G4', 0.5), n('A4', 1), n('G4', 0.5), n('F4', 0.5), n('D4', 1)]),
+  ]),
+
+  compile('neonrain', 'Neon Rain', {
+    category: 'originals', source: 'Original piece, inspired by upbeat 2000s pop-rock hooks (not affiliated with any band)', bpm: 100, difficulty: 2,
+  }, [
+    seg('The Hook', [n('E4', 0.5), n('G4', 0.5), n('A4', 0.5), n('G4', 0.5), n('E4', 0.5), n('D4', 0.5), n('C4', 1)]),
+    seg('The Hook (Lift)', [n('E4', 0.5), n('G4', 0.5), n('A4', 0.5), n('C5', 0.5), n('A4', 0.5), n('G4', 0.5), n('E4', 1)]),
+  ]),
+
+  compile('wakingthestorm', 'Waking the Storm', {
+    category: 'originals', source: 'Original piece, inspired by dramatic 2000s nu-metal piano intros (not affiliated with any band)', bpm: 84, difficulty: 4,
+  }, [
+    seg('Ominous Opening', [n('E4', 1), n('E4', 0.5), n('G4', 0.5), n('E4', 1), n('D4', 1)]),
+    seg('The Build', [n('E4', 0.5), n('F#4', 0.5), n('G4', 0.5), n('A4', 0.5), n('B4', 1), n('A4', 0.5), n('G4', 0.5)]),
+    seg('The Drop', [n('E5', 0.5), n('B4', 0.5), n('G4', 0.5), n('E4', 1.5)]),
+  ]),
+
+  compile('bluesgroove', '12-Bar Blues Groove', {
+    category: 'originals', source: 'Original piece — a classic blues-style riff pattern', bpm: 96, difficulty: 2,
+  }, [
+    seg('The Groove', [n('C4', 0.5), n('E4', 0.5), n('G4', 0.5), n('A4', 0.5), n('G4', 0.5), n('E4', 0.5), n('C4', 1)]),
+    seg('The Turnaround', [n('C4', 0.5), n('D#4', 0.5), n('E4', 0.5), n('G4', 0.5), n('E4', 0.5), n('D4', 0.5), n('C4', 1)]),
+  ]),
 ];
 
 export function getSong(id) {

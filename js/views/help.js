@@ -31,7 +31,8 @@ export function mount(container, params, ctx) {
 
     <section class="card">
       <h3>About the songs</h3>
-      <p>Kids' songs are traditional, public-domain melodies. Classical pieces are labeled "simplified arrangement" because they're beginner-friendly excerpts, arranged specifically for this app rather than exact transcriptions of any copyrighted score.</p>
+      <p>Kids' songs and folk pieces like Greensleeves or House of the Rising Sun are traditional, public-domain melodies. Classical pieces are labeled "simplified arrangement" because they're beginner-friendly excerpts, arranged specifically for this app rather than exact transcriptions of any copyrighted score.</p>
+      <p>The "Originals for Teens &amp; Adults" pieces (Fading Echoes, Shattered Glass, Neon Rain, Waking the Storm, 12-Bar Blues Groove) are original compositions written for this app. They're inspired by the mood and riff style of 2000s rock and emo piano ballads, but they are not covers of, and are not affiliated with or endorsed by, any specific song, artist, or band. That's a deliberate choice — actual song melodies from that era are still under copyright, so this app writes its own music instead of reproducing anyone else's.</p>
     </section>
   `;
 }

@@ -1,7 +1,10 @@
 import { SONGS } from '../songs.js';
 import { getSongProgress, isSegmentPassed } from '../storage.js';
 
-const CATEGORY_LABELS = { kids: "Kids' Favorites", classics: 'Classics & Covers' };
+const CATEGORY_LABELS = { kids: "Kids' Favorites", classics: 'Classics & Covers', originals: 'Originals for Teens & Adults' };
+const CATEGORY_NOTES = {
+  originals: 'These are original pieces written for this app, inspired by the mood and riff style of 2000s rock and emo piano ballads. They are not covers of, and are not affiliated with, any specific song or band.',
+};
 
 function stars(n) {
   return '★'.repeat(n) + '☆'.repeat(5 - n);
@@ -26,7 +29,9 @@ export function mount(container, params, ctx) {
         <button class="filter-tab ${filter === 'all' ? 'active' : ''}" data-filter="all">All Songs</button>
         <button class="filter-tab ${filter === 'kids' ? 'active' : ''}" data-filter="kids">Kids' Favorites</button>
         <button class="filter-tab ${filter === 'classics' ? 'active' : ''}" data-filter="classics">Classics &amp; Covers</button>
+        <button class="filter-tab ${filter === 'originals' ? 'active' : ''}" data-filter="originals">Originals for Teens &amp; Adults</button>
       </div>
+      ${CATEGORY_NOTES[filter] ? `<p class="category-note">${CATEGORY_NOTES[filter]}</p>` : ''}
       <section class="song-grid">
         ${filtered.map((song) => {
           const { passed, total } = songCompletion(song);

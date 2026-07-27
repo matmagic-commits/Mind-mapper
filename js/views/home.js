@@ -58,8 +58,13 @@ export function mount(container, params, ctx) {
       </div>
       <div class="card category-card">
         <h3>🎼 Classics &amp; Covers</h3>
-        <p>Ode to Joy, Für Elise, Canon in D — simplified arrangements of the pieces everyone recognizes.</p>
+        <p>Ode to Joy, Für Elise, Canon in D, Greensleeves — simplified arrangements of the pieces everyone recognizes.</p>
         <button class="btn btn-secondary" data-go="songs">Explore Classics</button>
+      </div>
+      <div class="card category-card">
+        <h3>🎧 For Teens &amp; Adults</h3>
+        <p>Original moody piano pieces inspired by 2000s rock and emo ballads, plus a blues groove — built for older beginners.</p>
+        <button class="btn btn-secondary" data-go="songs">Explore Originals</button>
       </div>
     </section>
   `;
